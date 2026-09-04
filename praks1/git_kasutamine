@@ -15,3 +15,7 @@
 
  remote: git remote add {nimi} github@github.com:GridHouse34/{reponimi}.git
  remote kontroll: git remote -v
+ 
+ commit uuendused: git add {file}
+                   git commit -m "{commit komentaar]"
+                   git push -uf {repo} {branch} 
