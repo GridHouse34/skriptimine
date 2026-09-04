@@ -13,3 +13,5 @@
          
  jälgimine: git init
 
+ remote: git remote add {nimi} github@github.com:GridHouse34/{reponimi}.git
+ remote kontroll: git remote -v
