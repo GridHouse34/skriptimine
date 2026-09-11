@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#küsib vanust kasutaja käest ja väljastab vastava gruppi kuhu kasutaja sobib
+
 read -p "Sisesta oma vanus: " vanus
 
 if [ "$vanus" -ge 0 ] && [ "$vanus" -le 11 ]; then
