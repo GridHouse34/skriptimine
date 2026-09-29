@@ -1,152 +1,36 @@
 #!/bin/bash
 
-show_header() {
-    echo "LOTOMÄNG"
-    echo
-}
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-clear_files() {
-    > player_numbers.txt
-    > lottery_numbers.txt
-}
+source "$SCRIPT_DIR/input.sh"
+source "$SCRIPT_DIR/lottery_functions.sh"
+source "$SCRIPT_DIR/result.sh"
+source "$SCRIPT_DIR/files.sh"
 
-read_player() {
-    read -p "Sisesta mängija nimi: " player_name
-
-    if [ -z "$player_name" ]; then
-        player_name="Unknown"
-    fi
-}
-
-read_player_numbers() {
-    echo
-    echo "Sisesta 5 erinevat numbrit vahemikus 1-50."
-
-    count=1
-
-    while [ $count -le 5 ]; do
-        read -p "Sisesta number $count: " number
-
-        if [ -z "$number" ]; then
-            echo "Viga: number jäi sisestamata."
-            continue
-        fi
-
-        if ! [[ "$number" =~ ^[0-9]+$ ]]; then
-            echo "Viga: sisesta täisarv."
-            continue
-        fi
-
-        if [ "$number" -lt 1 ] || [ "$number" -gt 50 ]; then
-            echo "Viga: number peab olema vahemikus 1-50."
-            continue
-        fi
-
-        if grep -qx "$number" player_numbers.txt; then
-            echo "Viga: see number on juba valitud."
-            continue
-        fi
-
-        echo "$number" >> player_numbers.txt
-        count=$((count + 1))
-    done
-}
-
-show_player_numbers() {
-    echo
-    echo "Mängija valitud numbrid:"
-    cat player_numbers.txt
-}
-
-generate_lottery_numbers() {
-    echo
-    echo "Loosin võidunumbrid..."
-
-    count=1
-
-    while [ $count -le 5 ]; do
-        lottery_number=$((RANDOM % 50 + 1))
-
-        if grep -qx "$lottery_number" lottery_numbers.txt; then
-            continue
-        fi
-
-        echo "$lottery_number" >> lottery_numbers.txt
-        count=$((count + 1))
-    done
-}
-
-show_lottery_numbers() {
-    echo
-    echo "Võidunumbrid:"
-    cat lottery_numbers.txt
-}
-
-check_matches() {
-    echo
-    echo "Tulemuste kontrollimine:"
-    echo
-
-    matches=0
-
-    while read number; do
-        echo "Kontrollin numbrit $number..."
-
-        if grep -qx "$number" lottery_numbers.txt; then
-            echo "TABAMUS!"
-            matches=$((matches + 1))
-        else
-            echo "Ei tabanud."
-        fi
-
-        echo
-    done < player_numbers.txt
-}
-
-set_result() {
-    if [ "$matches" -eq 5 ]; then
-        result="JACKPOT!"
-    elif [ "$matches" -eq 4 ]; then
-        result="Väga hea tulemus!"
-    elif [ "$matches" -eq 3 ]; then
-        result="Hea tulemus."
-    elif [ "$matches" -eq 2 ]; then
-        result="Kaks tabamust."
-    elif [ "$matches" -eq 1 ]; then
-        result="Üks tabamus."
-    else
-        result="Seekord tabamusi ei olnud."
-    fi
-}
-
-show_result() {
-    echo "Mängija: $player_name"
-    echo "Tabamusi: $matches / 5"
-    echo "$result"
-}
-
-save_result() {
-    {
-        echo "========================================"
-        echo "Date: $(date)"
-        echo "Player: $player_name"
-        echo "Player numbers:"
-        cat player_numbers.txt
-        echo "Lottery numbers:"
-        cat lottery_numbers.txt
-        echo "Matches: $matches"
-        echo "Result: $result"
-    } >> results.txt
-}
+PLAYER_FILE="$SCRIPT_DIR/player_numbers.txt"
+LOTTERY_FILE="$SCRIPT_DIR/lottery_numbers.txt"
+RESULTS_FILE="$SCRIPT_DIR/results.txt"
 
 show_header
-clear_files
+clear_files "$PLAYER_FILE" "$LOTTERY_FILE"
+
 read_player
-read_player_numbers
-show_player_numbers
-generate_lottery_numbers
-show_lottery_numbers
-check_matches
-set_result
-show_result
-save_result
+read_player_numbers "$PLAYER_FILE"
+
+show_player_numbers "$PLAYER_FILE"
+
+generate_lottery_numbers "$LOTTERY_FILE"
+show_lottery_numbers "$LOTTERY_FILE"
+
+check_matches "$PLAYER_FILE" "$LOTTERY_FILE"
+set_result "$matches"
+
+show_result "$player_name" "$matches" "$result"
+
+save_result \
+    "$RESULTS_FILE" \
+    "$PLAYER_FILE" \
+    "$LOTTERY_FILE" \
+    "$player_name" \
+    "$matches" \
+    "$result"
