@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# Kontrollime, et tegemist on otse root kasutajaga (mitte sudo kaudu)
+if [ "$USER" != "root" ] || [ -n "$SUDO_USER" ]; then
+    echo "Seda skripti tohib käivitada AINULT otsese root kasutajana! Sudo pole lubatud."
+    exit 1
+fi
+
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 <kasutajate_fail>"
+    exit 1
+fi
+
+FAIL=$1
+LOG_FAIL="loodud_kasutajad_paroolidega"
+
+> "$LOG_FAIL"
+
+while IFS= read -r KASUTAJA || [ -n "$KASUTAJA" ]; do
+    if [ -n "$KASUTAJA" ]; then
+        PAROOL=$(pwgen -A -1 8)
+        useradd -m "$KASUTAJA"
+        echo "$KASUTAJA:$PAROOL" | chpasswd
+        echo "$KASUTAJA:$PAROOL" >> "$LOG_FAIL"
+    fi
+done < "$FAIL"
+
+echo "Töö edukalt lõpetatud root kasutajana."
