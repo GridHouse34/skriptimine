@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 <kasutajate_fail>"
+    exit 1
+fi
+
+FAIL=$1
+LOG_FAIL="loodud_kasutajad_paroolidega"
+
+# Puhastame või tekitame logifaili
+> "$LOG_FAIL"
+
+while IFS= read -r KASUTAJA || [ -n "$KASUTAJA" ]; do
+    if [ -n "$KASUTAJA" ]; then
+        # Genereerime 8-kohalise parooli ilma sümboliteta
+        PAROOL=$(pwgen -A -1 8)
+        useradd -m "$KASUTAJA"
+        echo "$KASUTAJA:$PAROOL" | chpasswd
+        echo "$KASUTAJA:$PAROOL" >> "$LOG_FAIL"
+    fi
+done < "$FAIL"
+
+echo "Kasutajad loodud ja paroolid salvestatud faili $LOG_FAIL"
