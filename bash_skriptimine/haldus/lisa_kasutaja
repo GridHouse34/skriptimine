@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 <kasutajanimi>"
+    exit 1
+fi
+
+KASUTAJA=$1
+
+# -m tekitab /home/kasutaja koos peidetud failidega (/etc/skel baasil)
+useradd -m "$KASUTAJA"
+
+echo "Kasutaja $KASUTAJA lisatud."
+cat /etc/passwd | grep "$KASUTAJA"
+cat /etc/shadow | grep "$KASUTAJA"
