@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ $# -ne 2 ]; then
+    echo "Kasutus: $0 <kasutajate_fail> <paroolide_fail>"
+    exit 1
+fi
+
+KASUTAJAD_FAIL=$1
+PAROOLID_FAIL=$2
+
+# Loeme mõlemat faili paralleelselt
+exec 3<"$KASUTAJAD_FAIL"
+exec 4<"$PAROOLID_FAIL"
+
+while read -r KASUTAJA <&3 && read -r PAROOL <&4; do
+    if [ -n "$KASUTAJA" ] && [ -n "$PAROOL" ]; then
+        useradd -m "$KASUTAJA"
+        echo "$KASUTAJA:$PAROOL" | chpasswd
+        echo "Lisatud kasutaja $KASUTAJA koos parooliga."
+    fi
+done
+
+exec 3<&-
+exec 4<&-
