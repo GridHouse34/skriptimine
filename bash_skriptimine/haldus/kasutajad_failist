@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if [ $# -ne 1 ]; then
+    echo "Kasutus: $0 <kasutajate_fail>"
+    exit 1
+fi
+
+FAIL=$1
+
+while IFS= read -r KASUTAJA || [ -n "$KASUTAJA" ]; do
+    if [ -n "$KASUTAJA" ]; then
+        ./lisa_kasutaja "$KASUTAJA"
+    fi
+done < "$FAIL"
