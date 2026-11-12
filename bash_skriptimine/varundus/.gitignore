@@ -1,0 +1,6 @@
+praks2/backup/*
+praks2/logs/*
+*.tar.gz
+*.tar.zst
+*.tar.xz
+*.sha256
