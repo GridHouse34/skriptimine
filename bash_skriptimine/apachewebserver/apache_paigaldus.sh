@@ -1,14 +1,30 @@
 #!/bin/bash
 
-APACHE2=$(dpkg-query -W -f='${Status}' apache2 2>/dev/null | grep -c "ok installed")
+echo "Millist veebiserverit soovid paigaldada? (apache / nginx):"
+read VALIK
 
-if [ "$APACHE2" -eq 0 ]; then
-    echo "Apache2 ei ole paigaldatud. Alustan paigaldamist..."
+case "$VALIK" in
+    apache|apache2|Apache|Apache2)
+        TEENUS="apache2"
+        ;;
+    nginx|Nginx)
+        TEENUS="nginx"
+        ;;
+    *)
+        echo "Pane kirja ikka üleval loetelus olev teenus, eksole?."
+        exit 1
+        ;;
+esac
+
+OLEMAS=$(dpkg-query -W -f='${Status}' "$TEENUS" 2>/dev/null | grep -c "ok installed")
+
+if [ "$OLEMAS" -eq 0 ]; then
+    echo "$TEENUS ei ole paigaldatud. Alustan paigaldamist..."
     sudo apt update
-    sudo apt install -y apache2
-    echo "Apache2 on edukalt paigaldatud!"
-    systemctl status apache2 --no-pager
-elif [ "$APACHE2" -eq 1 ]; then
-    echo "Apache2 on juba paigaldatud."
-    systemctl status apache2 --no-pager
+    sudo apt install -y "$TEENUS"
+    echo "$TEENUS on edukalt paigaldatud!"
+    systemctl status "$TEENUS" --no-pager
+elif [ "$OLEMAS" -eq 1 ]; then
+    echo "$TEENUS on juba paigaldatud."
+    systemctl status "$TEENUS" --no-pager
 fi
