@@ -54,34 +54,57 @@ echo "----------------------------------------"
 MYSQL=$(dpkg-query -W -f='${Status}' mysql-server 2>/dev/null | grep -c "ok installed")
 
 if [ "$MYSQL" -eq 0 ]; then
-    echo "MySQL server ei ole paigaldatud. Alustan paigaldamist..."
+    echo "MySQL server ei ole paigaldatud."
+
+    while true; do
+        read -s -p "Sisesta soovitud MySQL root-parool: " MYSQL_PASS
+        echo
+        read -s -p "Korda MySQL root-parooli: " MYSQL_PASS2
+        echo
+        if [ -z "$MYSQL_PASS" ]; then
+            echo "Parool ei tohi olla tühi! Proovi uuesti."
+        elif [ "$MYSQL_PASS" != "$MYSQL_PASS2" ]; then
+            echo "Paroolid ei kattu! Proovi uuesti."
+        else
+            break
+        fi
+    done
+
+    echo "Alustan MySQL paigaldamist..."
+    sudo dpkg --purge mysql-apt-config 2>/dev/null || true
+    sudo rm -f /etc/apt/sources.list.d/mysql.list
+
     sudo apt update
     sudo apt install -y gnupg ca-certificates debconf-utils wget
 
-    echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | sudo debconf-set-selections
+    echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.4-lts" | sudo debconf-set-selections
     echo "mysql-apt-config mysql-apt-config/select-tools select Disabled" | sudo debconf-set-selections
     echo "mysql-apt-config mysql-apt-config/select-product select Ok" | sudo debconf-set-selections
-    echo "mysql-community-server mysql-community-server/root-pass password qwerty" | sudo debconf-set-selections
-    echo "mysql-community-server mysql-community-server/re-root-pass password qwerty" | sudo debconf-set-selections
-    echo "mysql-community-server mysql-server/default-auth-override select Use Strong Password Encryption (RECOMMENDED)" | sudo debconf-set-selections
+    printf "mysql-community-server mysql-community-server/root-pass password %s\n" "$MYSQL_PASS" | sudo debconf-set-selections
+    printf "mysql-community-server mysql-community-server/re-root-pass password %s\n" "$MYSQL_PASS" | sudo debconf-set-selections
 
     wget -O /tmp/mysql-apt-config_0.8.40-1_all.deb https://dev.mysql.com/get/mysql-apt-config_0.8.40-1_all.deb
     sudo DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/mysql-apt-config_0.8.40-1_all.deb
     rm -f /tmp/mysql-apt-config_0.8.40-1_all.deb
 
     sudo apt update
-    sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-server
+    if ! sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-server; then
+        echo "VIGA: mysql-server paigaldamine ebaõnnestus!"
+        exit 1
+    fi
+
     sudo systemctl enable --now mysql
 
-    cat > "$HOME/.my.cnf" << 'MYEOF'
+    cat > "$HOME/.my.cnf" << MYEOF
 [client]
 host=localhost
 user=root
-password=qwerty
+password=$MYSQL_PASS
 MYEOF
     chmod 600 "$HOME/.my.cnf"
+    unset MYSQL_PASS MYSQL_PASS2
 
-    echo "Valmis: Oracle MySQL on installitud. Root-parool: qwerty"
+    echo "Valmis: Oracle MySQL on installitud ja ~/.my.cnf seadistatud."
     mysql --version
 elif [ "$MYSQL" -eq 1 ]; then
     echo "MySQL server on juba paigaldatud."
